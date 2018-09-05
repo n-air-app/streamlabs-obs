@@ -303,13 +303,13 @@ if (process.env.NAIR_CACHE_DIR) {
 }
 app.setPath('userData', path.join(app.getPath('appData'), 'n-air-app'));
 
-app.setAsDefaultProtocolClient('nair');
+app.setAsDefaultProtocolClient('n-air-app');
 
 // This ensures that only one copy of our app can run at once.
 const shouldQuit = app.makeSingleInstance(argv => {
   // Check for protocol links in the argv of the other process
   argv.forEach(arg => {
-    if (arg.match(/^nair:\/\//)) {
+    if (arg.match(/^n-air-app:\/\//)) {
       mainWindow.send('protocolLink', arg);
     }
   });

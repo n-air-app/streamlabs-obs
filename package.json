@@ -68,7 +68,13 @@
         "DWANGO Co.,Ltd."
       ],
       "rfc3161TimeStampServer": "http://timestamp.digicert.com"
-    }
+    },
+    "protocols": [
+      {
+        "name": "N Air",
+        "schemes": ["n-air-app"]
+      }
+    ]
   },
   "ava": {
     "files": [
