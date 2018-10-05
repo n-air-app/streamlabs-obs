@@ -14,7 +14,7 @@ import {
   IStreamingSetting
 } from './platforms';
 import { CustomizationService } from './customization';
-import Raven from 'raven-js';
+import Sentry from '@sentry/browser';
 import { AppService } from 'services/app';
 import { SceneCollectionsService } from 'services/scene-collections';
 import { Subject } from 'rxjs/Subject';
@@ -62,7 +62,7 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
 
   init() {
     super.init();
-    this.setRavenContext();
+    this.setSentryContext();
     this.validateLogin().then(() => {
       this.updatePlatformUserInfo();
     });
@@ -74,7 +74,7 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
       'testing-fakeAuth',
       (e: Electron.Event, auth: any) => {
         this.LOGIN(auth);
-        this.setRavenContext();
+        this.setSentryContext();
       }
     );
   }
@@ -164,7 +164,7 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
   private async login(service: IPlatformService, auth: IPlatformAuth) {
     this.LOGIN(auth);
     this.userLogin.next(auth);
-    this.setRavenContext();
+    this.setSentryContext();
     await this.sceneCollectionsService.setupNewUser();
   }
 
@@ -261,7 +261,7 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
       if (parsed) {
         authWindow.close();
         this.LOGIN(parsed);
-        this.setRavenContext();
+        this.setSentryContext();
       } else {
         // 認可されていない場合は画面を出して操作可能にする
         authWindow.show();
@@ -309,13 +309,15 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
   }
 
   /**
-   * Registers the current user information with Raven so
+   * Registers the current user information with Sentry so
    * we can view more detailed information in sentry.
    */
-  setRavenContext() {
+  setSentryContext() {
     if (!this.isLoggedIn()) return;
-    Raven.setUserContext({ username: this.username, id: this.platformId });
-    Raven.setExtraContext({ platform: this.platform.type });
+    Sentry.configureScope(scope => {
+      scope.setUser({ username: this.username, id: this.platformId });
+      scope.setExtra('platform', this.platform.type);
+    })
   }
 
   popoutRecentEvents() {

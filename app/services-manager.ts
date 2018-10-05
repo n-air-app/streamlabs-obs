@@ -243,7 +243,7 @@ export class ServicesManager extends Service {
       if (!e && this.requestErrors.length === 0) return;
       if (e) {
 
-        // re-raise error for Raven
+        // re-raise error for Sentry
         const isChildWindowRequest = request.params && request.params.fetchMutations;
         if (isChildWindowRequest) setTimeout(() => { throw e; }, 0);
 

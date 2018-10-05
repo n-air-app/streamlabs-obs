@@ -37,7 +37,6 @@ interface IResource {
 }
 
 // list of modules without type definitions
-declare module 'raven-js/*';
 declare module 'v-tooltip';
 declare module 'traverse';
 declare module 'vue-multiselect';

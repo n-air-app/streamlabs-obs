@@ -15,9 +15,8 @@ import { AppService } from './services/app';
 import { ServicesManager } from './services-manager';
 import Utils from './services/utils';
 import electron from 'electron';
-import Raven from 'raven-js';
-import RavenVue from 'raven-js/plugins/vue';
-import RavenConsole from 'raven-js/plugins/console';
+import SentryElectron from '@sentry/electron';
+import SentryBrowser from '@sentry/browser';
 import VTooltip from 'v-tooltip';
 import VueI18n from 'vue-i18n';
 import moment from 'moment';
@@ -49,33 +48,12 @@ if (isProduction) {
 }
 
 if ((isProduction || process.env.NAIR_REPORT_TO_SENTRY) && !electron.remote.process.env.NAIR_IPC) {
-  Raven.config(sentryDsn, {
+  SentryElectron.init({
+    dsn: sentryDsn,
     release: nAirVersion,
-    dataCallback: data => {
-      // Because our URLs are local files and not publicly
-      // accessible URLs, we simply truncate and send only
-      // the filename.  Unfortunately sentry's electron support
-      // isn't that great, so we do this hack.
-      // Some discussion here: https://github.com/getsentry/sentry/issues/2708
-      const normalize = (filename: string) => {
-        const splitArray = filename.split('/');
-        return splitArray[splitArray.length - 1];
-      };
-
-      if (data.exception) {
-        data.exception.values[0].stacktrace.frames.forEach((frame: any) => {
-          frame.filename = 'app:///' + normalize(frame.filename);
-        });
-
-        data.culprit = data.exception.values[0].stacktrace.frames[0].filename;
-      }
-
-      return data;
-    }
+    integrations: [new SentryBrowser.Integrations.Vue({ Vue })],
   })
-    .addPlugin(RavenVue, Vue)
-    .addPlugin(RavenConsole, console, { levels: ['error'] })
-    .install();
+  //.addPlugin(RavenConsole, console, { levels: ['error'] }) // これはどうするのか? console.error() を送信するっぽい
 }
 
 require('./app.less');
@@ -118,7 +96,7 @@ document.addEventListener('DOMContentLoaded', () => {
       locale: i18nService.state.locale,
       fallbackLocale: i18nService.getFallbackLocale(),
       messages: i18nService.getLoadedDictionaries(),
-      missing: ((locale: VueI18n.Locale, key: VueI18n.Path, vm: Vue, values: any[]): string  => {
+      missing: ((locale: VueI18n.Locale, key: VueI18n.Path, vm: Vue, values: any[]): string => {
         if (values[0] && typeof values[0].fallback === 'string') {
           if (!isProduction) {
             console.info(`i18n missing key - ${key}: ${values[0].fallback}`);
