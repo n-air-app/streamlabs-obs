@@ -17,7 +17,8 @@
 <style lang="less" scoped>
 .button--go-live {
   min-width: 120px;
-  font-size: 14px;
+  font-size: 16px;
+  color: #f00;
 }
 .svg-live {
   margin-right: 4px;
