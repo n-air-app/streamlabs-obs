@@ -35,8 +35,12 @@ export class IpcServerService extends Service {
   }
 
   stopListening() {
-    ipcRenderer.removeListener('services-request', this.requestHandler);
-    this.servicesEventsSubscription.unsubscribe();
+    if (this.requestHandler) {
+      ipcRenderer.removeListener('services-request', this.requestHandler);
+    }
+    if (this.servicesEventsSubscription) {
+      this.servicesEventsSubscription.unsubscribe();
+    }
   }
 
   private sendEvent(event: IJsonRpcResponse<IJsonRpcEvent>) {

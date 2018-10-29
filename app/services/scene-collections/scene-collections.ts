@@ -122,7 +122,9 @@ export class SceneCollectionsService extends Service
     this.disableAutoSave();
     await this.save();
     await this.deloadCurrentApplicationState();
-    await this.stateService.flushManifestFile();
+    if (this.initialized) {
+      await this.stateService.flushManifestFile();
+    }
   }
 
   /**

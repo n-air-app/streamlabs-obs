@@ -6,6 +6,8 @@ import path from 'path';
 import electron from 'electron';
 import { FileManagerService } from 'services/file-manager';
 import { Inject } from 'util/injector';
+import { showMessageBox } from 'util/dialog';
+import { ExitService } from 'services/exit';
 
 interface ISceneCollectionsManifest {
   activeId: string;
@@ -24,6 +26,7 @@ export class SceneCollectionsStateService extends StatefulService<
   ISceneCollectionsManifest
 > {
   @Inject() fileManagerService: FileManagerService;
+  @Inject() exitService: ExitService;
 
   static initialState: ISceneCollectionsManifest = {
     activeId: null,
@@ -54,7 +57,33 @@ export class SceneCollectionsStateService extends StatefulService<
         if (recovered) this.LOAD_STATE(recovered);
       }
     } catch (e) {
-      console.warn('Error loading manifest file from disk');
+      console.error('Error loading manifest file from disk : %o', e);
+
+      const { response } = await showMessageBox({
+        type: 'error',
+        buttons: ['go ahead', 'no(quit app)', 'retry(restart app)'],
+        title: 'An error occered when reading SceneCollections\' manifest file',
+        message: `Error loading manifest file from disk.\n${e.message}`,
+        noLink: true,
+      });
+
+      switch (response) {
+        case 0: break;
+
+        case 1: {
+          this.exitService.quit();
+          throw new Error('Quitting for the failure of loading the SceneCollection manifest file');
+        }
+
+        case 2: {
+          this.exitService.relaunch();
+          throw new Error('Relaunching for the failure of loading the SceneCollection manifest file');
+        }
+
+        default: {
+          throw new Error(`Unknown dialog response: ${response}`);
+        }
+      }
     }
 
     await this.flushManifestFile();

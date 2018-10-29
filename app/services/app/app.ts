@@ -69,6 +69,11 @@ export class AppService extends StatefulService<IAppState> {
     // associated with the user in sentry.
     this.userService;
 
+    electron.ipcRenderer.on('shutdown', () => {
+      electron.ipcRenderer.send('acknowledgeShutdown');
+      this.shutdownHandler();
+    });
+
     this.sceneCollectionsService.initialize().then(
       () => this.questionaireService.startIfRequired()
     ).then(questionaireStarted => {
@@ -76,11 +81,6 @@ export class AppService extends StatefulService<IAppState> {
       if (!questionaireStarted) {
         onboarded = this.onboardingService.startOnboardingIfRequired();
       }
-
-      electron.ipcRenderer.on('shutdown', () => {
-        electron.ipcRenderer.send('acknowledgeShutdown');
-        this.shutdownHandler();
-      });
 
       this.shortcutsService;
 
