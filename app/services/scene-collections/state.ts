@@ -6,7 +6,6 @@ import path from 'path';
 import electron from 'electron';
 import { FileManagerService } from 'services/file-manager';
 import { Inject } from 'util/injector';
-import { showMessageBox } from 'util/dialog';
 import { ExitService } from 'services/exit';
 
 interface ISceneCollectionsManifest {
@@ -59,34 +58,44 @@ export class SceneCollectionsStateService extends StatefulService<
     } catch (e) {
       console.error('Error loading manifest file from disk : %o', e);
 
-      const { response } = await showMessageBox({
-        type: 'error',
-        buttons: ['go ahead', 'no(quit app)', 'retry(restart app)'],
-        title: 'An error occered when reading SceneCollections\' manifest file',
-        message: `Error loading manifest file from disk.\n${e.message}`,
-        noLink: true,
-      });
-
-      switch (response) {
-        case 0: break;
-
-        case 1: {
-          this.exitService.quit();
-          throw new Error('Quitting for the failure of loading the SceneCollection manifest file');
-        }
-
-        case 2: {
-          this.exitService.relaunch();
-          throw new Error('Relaunching for the failure of loading the SceneCollection manifest file');
-        }
-
-        default: {
-          throw new Error(`Unknown dialog response: ${response}`);
-        }
-      }
+      await this.showManifestErrorDialog(e);
     }
 
     await this.flushManifestFile();
+  }
+
+  private showManifestErrorDialog(err: Error) {
+    return new Promise((resolve, reject) => {
+      electron.remote.dialog.showMessageBox(electron.remote.getCurrentWindow(), {
+        type: 'error',
+        buttons: ['初期化する', 'アプリケーションを終了する', 'リトライする（再起動する）'],
+        title: 'N Air - Error',
+        message: `シーンコレクションのmanifest.jsonの読み込みに失敗しました。\n${err.message}`,
+        noLink: true,
+      }, (response) => {
+        switch (response) {
+          case 0:
+            resolve();
+            break;
+
+          case 1: {
+            this.exitService.quit();
+            reject('Quitting for the failure of loading the SceneCollection manifest file');
+            break;
+          }
+
+          case 2: {
+            this.exitService.relaunch();
+            reject('Relaunching for the failure of loading the SceneCollection manifest file');
+            break;
+          }
+
+          default: {
+            reject(`Unknown dialog response: ${response}`);
+          }
+        }
+      })
+    })
   }
 
   /**
