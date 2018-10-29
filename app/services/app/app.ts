@@ -123,6 +123,10 @@ export class AppService extends StatefulService<IAppState> {
     }, 300);
   }
 
+  /**
+   * @deprecated use ExitService
+   * @param param0
+   */
   relaunch({ clearCacheDir }: { clearCacheDir?: boolean } = {}) {
     const originalArgs: string[] = electron.remote.process.argv.slice(1);
 

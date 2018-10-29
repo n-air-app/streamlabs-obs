@@ -578,12 +578,13 @@ ipcMain.on('getUniqueId', event => {
   event.returnValue = uuid();
 });
 
-ipcMain.on('restartApp', () => {
-  // prevent unexpected cache clear
-  const args = process.argv.slice(1).filter(x => x !== '--clearCacheDir');
-
-  app.relaunch( {args} );
+ipcMain.on('restartApp', (e, args) => {
+  app.relaunch(args ? { args } : undefined);
   // Closing the main window starts the shut down sequence
+  mainWindow.close();
+});
+
+ipcMain.on('quitApp', (e) => {
   mainWindow.close();
 });
 
