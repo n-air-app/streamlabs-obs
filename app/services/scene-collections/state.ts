@@ -58,7 +58,10 @@ export class SceneCollectionsStateService extends StatefulService<
     } catch (e) {
       console.error('Error loading manifest file from disk : %o', e);
 
-      await this.showManifestErrorDialog(e);
+      // 存在していて失敗する場合には上書きしてしまうリスクがあるので、ダイアログを出して確認する
+      if (e.code !== 'ENOENT') {
+        await this.showManifestErrorDialog(e);
+      }
     }
 
     await this.flushManifestFile();
