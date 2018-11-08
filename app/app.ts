@@ -154,6 +154,13 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
+  }).catch(e => {
+    console.error(e);
+    remote.dialog.showErrorBox(
+      'N Air - Error',
+      '初期化中にエラーが発生しました。\n' +
+      'An error occured in initialize sequence.\n' +
+      e.message);
   });
 
   // Used for replacing the contents of this window with
