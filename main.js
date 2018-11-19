@@ -250,7 +250,10 @@ function startApp() {
 
   ipcMain.on('services-ready', () => {
     callService('AppService', 'setArgv', process.argv);
-    childWindow.loadURL(`${global.indexUrl}?windowId=child`);
+
+    if (childWindow && !childWindow.isDestroyed()) {
+      childWindow.loadURL(`${global.indexUrl}?windowId=child`);
+    }
   });
 
   ipcMain.on('window-childWindowIsReadyToShow', () => {

@@ -14,6 +14,7 @@ import { IWindowOptions, WindowsService } from './services/windows';
 import { AppService } from './services/app';
 import { ServicesManager } from './services-manager';
 import Utils from './services/utils';
+import * as QuitUtil from 'util/quit';
 import electron from 'electron';
 import Raven from 'raven-js';
 import RavenVue from 'raven-js/plugins/vue';
@@ -155,12 +156,40 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
   }).catch(e => {
+    // report to sentry
     console.error(e);
-    remote.dialog.showErrorBox(
-      'N Air - Error',
-      '初期化中にエラーが発生しました。\n' +
-      'An error occured in initialize sequence.\n' +
-      e.message);
+
+    // NOTE: mainとchild両方から呼ばれる可能性がある
+    // 同期呼び出しにするとAppServiceの初期化が止まるので再起動・終了までに10秒待たされる
+    remote.dialog.showMessageBox(
+      remote.getCurrentWindow(),
+      {
+        type: 'error',
+        buttons: ['再起動する(restart)', '終了する(quit)', '無視して続ける(ignore)'],
+        defaultId: 0,
+        cancelId: 0,
+        title: 'N Air - Error',
+        message: [
+          '初期化中にエラーが発生しました。',
+          'An error occurred in the initialization sequence.',
+        ].join('\n'),
+        detail: [
+          '再起動しても改善しない場合は、キャッシュフォルダの削除（シーンコレクションが初期化されます）や、再インストールをお試しください。',
+          // TODO: 英語
+          // TODO: 手順や注意点の記載されたページにリンクしたい
+          '--- error message ---',
+          e.message,
+        ].join('\n'),
+        noLink: true,
+      },
+      (response) => {
+        switch (response) {
+          case 0: return QuitUtil.relaunch();
+          case 1: return QuitUtil.quit();
+          case 2: {/* noop */}
+        }
+      }
+    );
   });
 
   // Used for replacing the contents of this window with
