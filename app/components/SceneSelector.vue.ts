@@ -82,7 +82,7 @@ export default class SceneSelector extends Vue {
       {
         type: 'warning',
         message: $t('scenes.removeSceneConfirm', { sceneName: name }),
-        buttons: [$t('common.cancel'), $t('common.ok')],
+        buttons: [$t('common.ok'), $t('common.cancel')],
         noLink: true,
       },
       ok => {
