@@ -86,7 +86,7 @@ export default class SceneSelector extends Vue {
         noLink: true,
       },
       ok => {
-        if (!ok) return;
+        if (ok) return;
         if (!this.scenesService.removeScene(this.activeSceneId)) {
           alert($t('scenes.mustHaveLeastOnceScene'));
         }
