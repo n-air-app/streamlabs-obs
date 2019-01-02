@@ -250,7 +250,10 @@ function startApp() {
 
   ipcMain.on('services-ready', () => {
     callService('AppService', 'setArgv', process.argv);
-    childWindow.loadURL(`${global.indexUrl}?windowId=child`);
+
+    if (childWindow && !childWindow.isDestroyed()) {
+      childWindow.loadURL(`${global.indexUrl}?windowId=child`);
+    }
   });
 
   ipcMain.on('window-childWindowIsReadyToShow', () => {
@@ -578,12 +581,13 @@ ipcMain.on('getUniqueId', event => {
   event.returnValue = uuid();
 });
 
-ipcMain.on('restartApp', () => {
-  // prevent unexpected cache clear
-  const args = process.argv.slice(1).filter(x => x !== '--clearCacheDir');
-
-  app.relaunch( {args} );
+ipcMain.on('restartApp', (e, args) => {
+  app.relaunch(args ? { args } : undefined);
   // Closing the main window starts the shut down sequence
+  mainWindow.close();
+});
+
+ipcMain.on('quitApp', () => {
   mainWindow.close();
 });
 
