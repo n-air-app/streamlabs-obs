@@ -53,10 +53,6 @@ function log(...args) {
   }
 }
 
-// We use a special cache directory for running tests
-if (process.env.NAIR_CACHE_DIR) {
-  app.setPath('appData', process.env.NAIR_CACHE_DIR);
-}
 app.setPath('userData', path.join(app.getPath('appData'), pjson.name));
 
 if (process.argv.includes('--clearCacheDir')) {
@@ -300,6 +296,12 @@ function startApp() {
     //   openDevTools();
     // }, 10 * 1000);
   }
+}
+
+// We use a special cache directory for running tests
+if (process.env.NAIR_CACHE_DIR) {
+  app.setPath('appData', process.env.NAIR_CACHE_DIR);
+  app.setPath('userData', path.join(app.getPath('appData'), pjson.name));
 }
 
 app.setAsDefaultProtocolClient('nair');
