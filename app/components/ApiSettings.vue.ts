@@ -1,18 +1,17 @@
 import Vue from 'vue';
 import { Component } from 'vue-property-decorator';
-import { Inject } from '../util/injector';
+import { Inject } from 'util/injector';
 import GenericFormGroups from 'components/obs/inputs/GenericFormGroups.vue';
 import ObsTextInput from 'components/obs/inputs/ObsTextInput.vue';
-import { ITcpServerServiceApi, ITcpServersSettings } from '../services/tcp-server';
-import { ISettingsSubCategory } from '../services/settings';
+import { ITcpServerServiceApi, ITcpServersSettings } from 'services/tcp-server';
+import { ISettingsSubCategory } from 'services/settings';
 
 @Component({
   components: { GenericFormGroups, ObsTextInput }
 })
 export default class ApiSettings extends Vue {
 
-  @Inject()
-  tcpServerService: ITcpServerServiceApi;
+  @Inject() tcpServerService: ITcpServerServiceApi;
 
   settingsFormData: ISettingsSubCategory[] = null;
 
@@ -33,7 +32,6 @@ export default class ApiSettings extends Vue {
   destroyed() {
     this.tcpServerService.listen();
   }
-
 
   restoreDefaults() {
     this.tcpServerService.setSettings(this.tcpServerService.getDefaultSettings());
