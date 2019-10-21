@@ -41,7 +41,14 @@ const windowStateKeeper = require('electron-window-state');
 const { URL } = require('url');
 const obs = require('obs-studio-node');
 
-app.disableHardwareAcceleration();
+app.setPath('userData', path.join(app.getPath('appData'), pjson.name));
+
+if (process.argv.includes('--clearCacheDir')) {
+  // __installer.exe は electron-updater 差分アップデートの比較元になるので消してはいけない
+  const rmPath = path.join(app.getPath('userData'), '!(__installer.exe)');
+  log('clear cache directory!: ', rmPath);
+  rimraf.sync(rmPath);
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 // Main Program
@@ -51,15 +58,6 @@ function log(...args) {
   if (!process.env.NAIR_DISABLE_MAIN_LOGGING) {
     console.log(...args);
   }
-}
-
-app.setPath('userData', path.join(app.getPath('appData'), pjson.name));
-
-if (process.argv.includes('--clearCacheDir')) {
-  // __installer.exe は electron-updater 差分アップデートの比較元になるので消してはいけない
-  const rmPath = path.join(app.getPath('userData'), '!(__installer.exe)');
-  log('clear cache directory!: ', rmPath);
-  rimraf.sync(rmPath);
 }
 
 // Windows
@@ -88,7 +86,7 @@ function startApp() {
     process.env.NAIR_IPC_PATH = "nair-".concat(uuid());
     process.env.NAIR_IPC_USERDATA = app.getPath('userData');
     // Host a new IPC Server and connect to it.
-    obs.IPC.ConnectOrHost(process.env.NAIR_IPC_PATH);
+    obs.IPC.host(process.env.NAIR_IPC_PATH);
     obs.NodeObs.SetWorkingDirectory(path.join(
       app.getAppPath().replace('app.asar', 'app.asar.unpacked'),
       'node_modules',
@@ -548,18 +546,6 @@ ipcMain.on('restartApp', () => {
   mainWindow.close();
 });
 
-ipcMain.on('requestSourceAttributes', (e, names) => {
-  const sizes = require('obs-studio-node').getSourcesSize(names);
-
-  e.sender.send('notifySourceAttributes', sizes);
-});
-
-ipcMain.on('requestPerformanceStatistics', (e) => {
-  const stats = getObs().OBS_API_getPerformanceStatistics();
-
-  e.sender.send('notifyPerformanceStatistics', stats);
-});
-
 ipcMain.on('webContents-preventNavigation', (e, id) => {
   webContents.fromId(id).on('will-navigate', e => {
     e.preventDefault();
@@ -568,4 +554,9 @@ ipcMain.on('webContents-preventNavigation', (e, id) => {
 
 ipcMain.on('getMainWindowWebContentsId', e => {
   e.returnValue = mainWindow.webContents.id;
+});
+
+ipcMain.on('requestPerformanceStats', e => {
+  const stats = app.getAppMetrics();
+  e.sender.send('performanceStatsResponse', stats);
 });

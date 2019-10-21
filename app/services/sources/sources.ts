@@ -317,7 +317,7 @@ export class SourcesService extends StatefulService<ISourcesState> implements IS
           this.UPDATE_SOURCE(size);
         }
         this.updateSourceFlags(source, update.outputFlags);
-      });      
+      });
     }
   }
 
