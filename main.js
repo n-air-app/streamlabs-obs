@@ -30,9 +30,10 @@ if (!process.env.NAIR_LICENSE_API_KEY && pjson.getlicensenair_key) {
 ////////////////////////////////////////////////////////////////////////////////
 // Modules and other Requires
 ////////////////////////////////////////////////////////////////////////////////
-const { app, BrowserWindow, ipcMain, session, crashReporter, dialog } = require('electron');
+const { app, BrowserWindow, ipcMain, session, crashReporter, dialog, systemPreferences } = require('electron');
 const electron = require('electron');
 const fs = require('fs');
+const os = require('os');
 const { Updater } = require('./updater/Updater.js');
 const uuid = require('uuid/v4');
 const rimraf = require('rimraf');
@@ -142,6 +143,14 @@ function startApp() {
         processType: 'main'
       }
     });
+  }
+
+  // see https://docs.microsoft.com/en-us/windows/win32/api/winnt/ns-winnt-osversioninfoexw#remarks
+  if (os.release() < 6.2/* Windows7 */ && !systemPreferences.isAeroGlassEnabled()) {
+    dialog.showErrorBox(
+      'Aeroが無効になっています',
+      'Windows7でN Airを万全に利用するためには、Aeroを有効にする必要があります。どうしてもAeroを無効にしておきたい場合は表示が崩れますから、ウィンドウを最大化してお使いください。'
+    );
   }
 
   const mainWindowState = windowStateKeeper({
