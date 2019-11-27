@@ -11,7 +11,7 @@ import path from 'path';
 import electron from 'electron';
 import fs from 'fs';
 import { parse } from './parse';
-import { ScenesService } from 'services/scenes';
+import { ScenesService, Scene } from 'services/scenes';
 import { SourcesService } from 'services/sources';
 import { E_AUDIO_CHANNELS } from 'services/audio';
 import { AppService } from 'services/app';
@@ -27,9 +27,11 @@ import {
   ISceneCollectionsServiceApi,
   ISceneCollectionCreateOptions
 } from '.';
-import { SceneCollectionsStateService } from './state';
-import { Subject } from 'rxjs/Subject';
+import { SceneCollectionsStateService, ScenePresetId } from './state';
+import { Subject } from 'rxjs';
 import { $t } from 'services/i18n';
+import { SettingsService } from 'services/settings';
+import { DismissablesService, EDismissable } from 'services/dismissables';
 
 const uuid = window['require']('uuid/v4');
 
@@ -71,6 +73,8 @@ export class SceneCollectionsService extends Service
   @Inject() userService: UserService;
   @Inject() overlaysPersistenceService: OverlaysPersistenceService;
   @Inject() tcpServerService: TcpServerService;
+  @Inject() dismissablesService: DismissablesService;
+  @Inject() settingsService: SettingsService;
 
   collectionAdded = new Subject<ISceneCollectionsManifestEntry>();
   collectionRemoved = new Subject<ISceneCollectionsManifestEntry>();
@@ -103,7 +107,58 @@ export class SceneCollectionsService extends Service
     } else {
       await this.create();
     }
+
+    const scenes = this.scenesService.scenes;
+    if (this.collections.length === 1 && scenes.length === 1 && scenes[0].getItems().length === 0) {
+      // シーンが一つで空であるため、シーンプリセットをインストールする
+      await this.installPresetSceneCollection();
+    }
+
     this.initialized = true;
+  }
+
+  /// install preset scene collection into active scene collection
+  async installPresetSceneCollection() {
+    // 既存scene を消す
+    this.scenesService.scenes.forEach(scene => scene.remove(true));
+
+    // キャンバス解像度を 1280x720 に変更する
+    const CanvasResolution = '1280x720';
+    const video = this.settingsService.getSettingsFormData('Video');
+    if (video) {
+      const setting = this.settingsService.findSetting(video, 'Untitled', 'Base');
+      if (setting) {
+        if (setting.value !== CanvasResolution) {
+          console.log(`Canvas resolution is ${setting.value}. reset to ${CanvasResolution}.`);
+          setting.value = CanvasResolution;
+          this.settingsService.setSettings('Video', video);
+        }
+      }
+    }
+
+    // this.load() を参考に
+
+    this.startLoadingOperation();
+
+    const jsonData = this.stateService.readCollectionFile(ScenePresetId);
+    // Preset file作成上の注意
+    //  - image pathを相対にする
+    //  - default audio sourcesを削除する
+
+    const root: RootNode = parse(jsonData, NODE_TYPES);
+    // この間で読み込んだ内容を加工できる
+    //  - デフォルトソースが重複している場合に除去する? 現在はpreset側で除去している
+    await root.load();
+    this.hotkeysService.bindHotkeys();
+
+    await this.save();
+
+    this.finishLoadingOperation();
+
+    // activate tips for preset scene collection
+    this.dismissablesService.reset(EDismissable.ScenePresetHelpTip);
+    // dismiss initial scene collections help tip if not yet(since its position is overlapped)
+    this.dismissablesService.dismiss(EDismissable.SceneCollectionsHelpTip);
   }
 
   /**
@@ -121,6 +176,7 @@ export class SceneCollectionsService extends Service
   async deinitialize() {
     this.disableAutoSave();
     await this.save();
+    this.tcpServerService.stopRequestsHandling();
     await this.deloadCurrentApplicationState();
     await this.stateService.flushManifestFile();
   }
@@ -260,7 +316,7 @@ export class SceneCollectionsService extends Service
     name: string,
     progressCallback?: (info: IDownloadProgress) => void
   ) {
-    this.startLoadingOperation();
+    this.startLoadingOperation(); // memo: calling this in loadOverlay() too
 
     const pathName = await this.overlaysPersistenceService.downloadOverlay(
       url,
@@ -463,8 +519,6 @@ export class SceneCollectionsService extends Service
   private async deloadCurrentApplicationState() {
     if (!this.initialized) return;
 
-    this.tcpServerService.stopRequestsHandling();
-
     this.collectionWillSwitch.next();
 
     this.disableAutoSave();
@@ -497,6 +551,7 @@ export class SceneCollectionsService extends Service
    */
   private startLoadingOperation() {
     this.appService.startLoading();
+    this.tcpServerService.stopRequestsHandling();
     this.disableAutoSave();
   }
 
@@ -544,6 +599,9 @@ export class SceneCollectionsService extends Service
     await this.saveCurrentApplicationStateAs(id);
     this.stateService.ADD_COLLECTION(id, name, new Date().toISOString());
     this.collectionAdded.next(this.collections.find(coll => coll.id === id));
+
+    // コレクションが増えたら scene preset help tipを消す
+    this.dismissablesService.dismiss(EDismissable.ScenePresetHelpTip);
   }
 
   /**
