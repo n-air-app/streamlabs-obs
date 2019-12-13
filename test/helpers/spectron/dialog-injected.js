@@ -2,16 +2,22 @@ const electron = require('electron');
 
 (() => {
   let currentCb;
-  let currentButtons;
+  let currentOpts;
 
   electron.dialog.showMessageBox = function showMessageBox(win, opts, cb) {
     currentCb = cb;
-    currentButtons = opts.buttons;
+    currentOpts = opts;
   };
 
   electron.ipcMain.on('__SPECTRON_FAKE_MESSAGE_BOX', (e, buttonLabel) => {
-    currentButtons.forEach((button, index) => {
+    currentOpts.buttons.forEach((button, index) => {
       if (button === buttonLabel) currentCb(index);
     });
+  });
+  electron.ipcMain.on('__SPECTRON_FAKE_MESSAGE_BOX_GET_MESSAGE', e => {
+    e.returnValue = currentOpts.message;
+  });
+  electron.ipcMain.on('__SPECTRON_FAKE_MESSAGE_BOX_GET_DETAIL', e => {
+    e.returnValue = currentOpts.detail;
   });
 })();

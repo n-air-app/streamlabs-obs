@@ -28,6 +28,17 @@ export async function clickFormInput(t, label, index = 0) {
     .click();
 }
 
+export async function checkFormInput(t, label, checked, index = 0) {
+  const id = await getNthLabelId(t, label, index);
+
+  const client = t.context.app.client;
+
+  const current = await client.elementIdElement(id, 'input').isSelected();
+  if (current !== checked) {
+    await client.elementIdElement(id, 'input').click();
+  }
+}
+
 export async function setFormDropdown(t, label, value, index = 0) {
   const id = await getNthLabelId(t, label, index);
 

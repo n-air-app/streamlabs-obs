@@ -4,3 +4,15 @@ export async function dialogDismiss(t, buttonLabel) {
     buttonLabel
   );
 }
+
+export async function dialogMessage(t) {
+  return await t.context.app.electron.ipcRenderer.sendSync(
+    '__SPECTRON_FAKE_MESSAGE_BOX_GET_MESSAGE'
+  );
+}
+
+export async function dialogDetail(t) {
+  return await t.context.app.electron.ipcRenderer.sendSync(
+    '__SPECTRON_FAKE_MESSAGE_BOX_GET_DETAIL'
+  );
+}

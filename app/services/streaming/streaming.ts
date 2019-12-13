@@ -18,6 +18,7 @@ import { CustomizationService } from 'services/customization';
 import { UserService } from 'services/user';
 import { IStreamingSetting } from '../platforms';
 import { OptimizedSettings } from 'services/settings/optimizer';
+import { openErrorDialogFromFailure } from 'services/nicolive-program/NicoliveFailure';
 
 enum EOBSOutputType {
   Streaming = 'streaming',
@@ -406,8 +407,14 @@ export class StreamingService extends StatefulService<IStreamingServiceState>
         this.SET_STREAMING_STATUS(EStreamingState.Ending, time);
         this.streamingStatusChange.next(EStreamingState.Ending);
       } else if (info.signal === EOBSOutputSignal.Reconnect) {
-        this.SET_STREAMING_STATUS(EStreamingState.Reconnecting);
-        this.streamingStatusChange.next(EStreamingState.Reconnecting);
+        if (this.customizationService.reconnectionEnabled) {
+          this.SET_STREAMING_STATUS(EStreamingState.Reconnecting);
+          this.streamingStatusChange.next(EStreamingState.Reconnecting);
+        } else {
+          this.stopStreaming();
+          // show notification alert dialog
+          info.code = EOutputCode.Disconnected;
+        }
       } else if (info.signal === EOBSOutputSignal.ReconnectSuccess) {
         this.SET_STREAMING_STATUS(EStreamingState.Live);
         this.streamingStatusChange.next(EStreamingState.Live);
@@ -431,30 +438,42 @@ export class StreamingService extends StatefulService<IStreamingServiceState>
     }
 
     if (info.code) {
-      let errorText = '';
+      let errorMessage = '';
+      let errorDetail = '';
 
       if (info.code === EOutputCode.BadPath) {
-        errorText =
-          $t('streaming.badPathError');
+        errorDetail = 'badPathError';
+        errorMessage = $t(`streaming.${errorDetail}`);
       } else if (info.code === EOutputCode.ConnectFailed) {
-        errorText =
-          $t('streaming.connectFailedError');
+        errorDetail = 'connectFailedError';
+        errorMessage = $t(`streaming.${errorDetail}`);
       } else if (info.code === EOutputCode.Disconnected) {
-        errorText =
-          $t('streaming.disconnectedError');
+        errorDetail = 'disconnectedError';
+        errorMessage = $t(`streaming.${errorDetail}`);
       } else if (info.code === EOutputCode.InvalidStream) {
-        errorText =
-          $t('streaming.invalidStreamError');
+        errorDetail = 'invalidStreamError';
+        errorMessage = $t(`streaming.${errorDetail}`);
       } else if (info.code === EOutputCode.NoSpace) {
-        errorText = $t('streaming.noSpaceError');
+        errorDetail = 'noSpaceError';
+        errorMessage = $t(`streaming.${errorDetail}`);
       } else if (info.code === EOutputCode.Unsupported) {
-        errorText =
-          $t('streaming.unsupportedError');
+        errorDetail = 'unsupportedError';
+        errorMessage = $t(`streaming.${errorDetail}`);
       } else if (info.code === EOutputCode.Error) {
-        errorText = $t('streaming.error') + info.error;
+        errorMessage = $t('streaming.error') + info.error;
       }
 
-      alert(errorText);
+      electron.remote.dialog.showMessageBox(
+        electron.remote.getCurrentWindow(),
+        {
+          type: 'error',
+          message: errorMessage,
+          detail: errorDetail,
+          buttons: ['OK'],
+          noLink: true,
+        },
+        () => {}
+      );
     }
   }
 
