@@ -33,6 +33,7 @@ import {
   release as nodeOsRelease,
 } from 'os';
 import { memoryUsage as nodeMemUsage } from 'process';
+import { QuestionaireService } from './questionaire';
 
 // Eventually we will support authing multiple platforms at once
 interface IUserServiceState {
@@ -46,6 +47,7 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
   @Inject() sceneCollectionsService: SceneCollectionsService;
   @Inject() windowsService: WindowsService;
   @Inject() settingsService: SettingsService;
+  @Inject() questionaireService: QuestionaireService;
 
   @mutation()
   LOGIN(auth: IPlatformAuth) {
@@ -116,11 +118,12 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
   }
 
   /**
+   * @deprecated
    * This is a uuid that persists across the application lifetime and uniquely
    * identifies this particular installation of N Air, even when the user is
    * not logged in.
    */
-  getLocalUserId() {
+  private getLocalUserId() {
     const localStorageKey = 'NAirLocalUserId';
     let userId = localStorage.getItem(localStorageKey);
 
@@ -173,11 +176,18 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
     }
   }
 
-  private async login(service: IPlatformService, auth: IPlatformAuth) {
+  get isPremium() {
+    if (this.isLoggedIn()) {
+      return this.state.auth.platform.isPremium;
+    }
+  }
+
+  private async login(service: IPlatformService, rawAuth: IPlatformAuth) {
+    const isPremium = await service.isPremium(rawAuth.platform.token);
+    const auth = { ...rawAuth, platform: { ...rawAuth.platform, isPremium } };
     this.LOGIN(auth);
     this.userLogin.next(auth);
     this.setRavenContext();
-    await this.sceneCollectionsService.setupNewUser();
   }
 
   async logOut() {
@@ -201,13 +211,15 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
    * Starts the authentication process.  Multiple callbacks
    * can be passed for various events.
    */
-  startAuth(
+  startAuth({
+    platform,
+    onAuthClose,
+    onAuthFinish,
+  }: {
     platform: TPlatform,
-    onWindowShow: (...args: any[]) => any,
-    onAuthStart: (...args: any[]) => any,
-    onAuthCancel: (...args: any[]) => any,
-    onAuthFinish: (...args: any[]) => any
-  ) {
+    onAuthClose: (...args: any[]) => any,
+    onAuthFinish: (...args: any[]) => any,
+  }) {
     const service = getPlatformService(platform);
     console.log('startAuth service = ' + JSON.stringify(service));
 
@@ -227,20 +239,19 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
       console.log('parsed = ' + JSON.stringify(parsed)); // DEBUG
 
       if (parsed) {
-        authWindow.close();
-        onAuthStart();
+        // OAuthの認可が確認できたとき
         await this.login(service, parsed);
-        defer(onAuthFinish);
+
+        onAuthFinish();
+        authWindow.close();
+      } else {
+        // 未ログイン時のログイン画面、または認可画面のとき
+        authWindow.show();
       }
     });
 
-    authWindow.once('ready-to-show', () => {
-      authWindow.show();
-      defer(onWindowShow);
-    });
-
     authWindow.once('close', () => {
-      onAuthCancel();
+      onAuthClose();
     });
 
     authWindow.setMenu(null);
@@ -254,35 +265,11 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
   private updatePlatformUserInfo() {
     if (!this.isLoggedIn()) return;
 
-    const service = getPlatformService(this.platform.type);
-
-    const authWindow = new electron.remote.BrowserWindow({
-      ...service.authWindowOptions,
-      alwaysOnTop: false,
-      show: false,
-      webPreferences: {
-        nodeIntegration: false,
-        nativeWindowOpen: true,
-        sandbox: true
-      }
+    this.startAuth({
+      platform: this.platform.type,
+      onAuthFinish: () => {},
+      onAuthClose: () => {},
     });
-
-    authWindow.webContents.on('did-navigate', (e, url) => {
-      const parsed = this.parseAuthFromUrl(url);
-
-      if (parsed) {
-        authWindow.close();
-        this.LOGIN(parsed);
-        this.userLogin.next(parsed);
-        this.setRavenContext();
-      } else {
-        // 認可されていない場合は画面を出して操作可能にする
-        authWindow.show();
-      }
-    });
-
-    authWindow.setMenu(null);
-    authWindow.loadURL(service.authUrl);
   }
 
   updatePlatformToken(token: string) {
@@ -341,6 +328,7 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
       ]);
 
       return {
+        cacheId: this.questionaireService.uuid,
         platform: this.platform ? this.platform.type : 'not logged in',
         cpuModel: nodeCpus()[0].model,
         cpuCores: `physical:${cpu.physicalCores} logical:${cpu.cores}`,
@@ -353,6 +341,7 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
       };
     } catch (err) {
       return {
+        cacheId: this.questionaireService.uuid,
         platform: this.platform ? this.platform.type : 'not logged in',
         cpuModel: nodeCpus()[0].model,
         cpuCores: `logical:${nodeCpus().length}`,
@@ -360,7 +349,7 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
         memTotal: nodeTotalMem(),
         memAvailable: nodeFreeMem(),
         memUsage: nodeMemUsage(),
-        exceptionWhenGetSystemInfo: err
+        exceptionWhenGetSystemInfo: err,
       };
     }
   }
