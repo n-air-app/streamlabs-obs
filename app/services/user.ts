@@ -5,6 +5,7 @@ import { PersistentStatefulService } from './persistent-stateful-service';
 import { Inject } from '../util/injector';
 import { mutation } from './stateful-service';
 import electron from 'electron';
+import { Menu } from 'util/menus/Menu';
 import { HostsService } from './hosts';
 import {
   getPlatformService,
@@ -34,6 +35,7 @@ import {
 } from 'os';
 import { memoryUsage as nodeMemUsage } from 'process';
 import { QuestionaireService } from './questionaire';
+import { addClipboardMenu } from 'util/addClipboardMenu';
 
 // Eventually we will support authing multiple platforms at once
 interface IUserServiceState {
@@ -253,6 +255,8 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
     authWindow.once('close', () => {
       onAuthClose();
     });
+
+    addClipboardMenu(authWindow);
 
     authWindow.setMenu(null);
     authWindow.loadURL(service.authUrl);
