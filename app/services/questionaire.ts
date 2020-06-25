@@ -230,7 +230,7 @@ export class QuestionaireService extends StatefulService<
           electron.remote.getCurrentWindow(), // enqueteWindowにするとダイアログ自体出ない
           {
             type: 'warning',
-            buttons: [$t('common.cancel'), $t('common.ok')],
+            buttons: [$t('common.ok'), $t('common.cancel'), ],
             title: $t('onboarding.questionaireSkipWarningTitle'),
             message: $t('onboarding.questionaireSkipWarning'),
             noLink: true,

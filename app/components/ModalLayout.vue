@@ -12,17 +12,17 @@
   </div>
   <div v-if="showControls" class="modal-layout-controls">
     <button
+      class="button button--action"
+      @click="doneHandler"
+      data-test="Done">
+      {{ $t('common.done') }}
+    </button>
+    <button
       v-if="showCancel"
       class="button button--default"
       @click="cancel"
       data-test="Cancel">
       {{ $t('common.cancel') }}
-    </button>
-    <button
-      class="button button--action"
-      @click="doneHandler"
-      data-test="Done">
-      {{ $t('common.done') }}
     </button>
   </div>
   <div v-if="customControls" class="modal-layout-controls">
