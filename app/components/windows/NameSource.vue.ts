@@ -70,7 +70,7 @@ export default class NameSource extends Vue {
         sourceId = source.sourceId;
       }
 
-      this.sourcesService.showSourceProperties(sourceId);
+      this.sourcesService.showSourceProperties(sourceId, true);
     }
   }
 

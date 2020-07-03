@@ -6,11 +6,13 @@ import { TFormData } from 'components/shared/forms/Input';
 import { WindowsService } from 'services/windows';
 import windowMixin from 'components/mixins/window';
 import { ISourcesServiceApi } from 'services/sources';
+import { IScenesServiceApi } from '../../services/scenes';
 
 import ModalLayout from 'components/ModalLayout.vue';
 import Display from 'components/shared/Display.vue';
 import GenericForm from 'components/shared/forms/GenericForm.vue';
 import { $t } from 'services/i18n';
+import autoFitToScreen from '../../util/autoFitToScreen'
 
 @Component({
   components: {
@@ -25,10 +27,14 @@ export default class SourceProperties extends Vue {
   @Inject()
   sourcesService: ISourcesServiceApi;
 
+  @Inject() 
+  scenesService: IScenesServiceApi;
+
   @Inject()
   windowsService: WindowsService;
 
   sourceId = this.windowsService.getChildWindowQueryParams().sourceId;
+  initial = this.windowsService.getChildWindowQueryParams().initial;
   source = this.sourcesService.getSource(this.sourceId);
   properties: TFormData = [];
   initialProperties: TFormData = [];
@@ -61,7 +67,19 @@ export default class SourceProperties extends Vue {
   }
 
   done() {
+    this.initialFitToScreen();
     this.closeWindow();
+  }
+
+  initialFitToScreen() {
+    if (this.initial && autoFitToScreen.isRequired(this.source)){
+      const activeSceneItems = this.scenesService.activeScene.getItems();
+      activeSceneItems.forEach(element => {
+        if (element.sourceId === this.sourceId) {
+          element.fitToScreen();
+        }
+      });
+    }
   }
 
   cancel() {
@@ -71,6 +89,7 @@ export default class SourceProperties extends Vue {
         this.initialProperties
       );
     }
+    this.initialFitToScreen();
     this.closeWindow();
   }
 

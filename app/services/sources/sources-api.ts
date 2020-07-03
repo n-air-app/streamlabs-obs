@@ -65,7 +65,7 @@ export interface ISourcesServiceApi {
    */
   addFile(path: string): ISourceApi;
   suggestName(name: string): string;
-  showSourceProperties(sourceId: string): void;
+  showSourceProperties(sourceId: string, initial?: boolean): void;
   showShowcase(): void;
   showAddSource(sourceType: TSourceType): void;
   showNameSource(sourceType: TSourceType): void;
