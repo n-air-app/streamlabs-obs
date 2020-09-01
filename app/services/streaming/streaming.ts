@@ -469,10 +469,18 @@ export class StreamingService extends StatefulService<IStreamingServiceState>
           type: 'error',
           message: errorMessage,
           detail: errorDetail,
-          buttons: ['OK'],
+          buttons: ['OK', 'Reconnect'],
           noLink: true,
         },
-        () => {}
+        (button) => {
+          switch (button) {
+            case 0: // ok
+              break;
+            case 1: // reconnect
+              this.toggleStreaming();
+              break;
+          }
+        }
       );
     }
   }
