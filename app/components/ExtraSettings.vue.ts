@@ -92,6 +92,18 @@ export default class ExtraSettings extends Vue {
     this.customizationService.setPollingPerformanceStatistics(model.value);
   }
 
+  get reconnectionEnabledModel(): IFormInput<boolean> {
+    return {
+      name: 'reconnection',
+      description: $t('settings.reconnectionEnabled'),
+      value: this.customizationService.reconnectionEnabled
+    };
+  }
+
+  setReconnectionEnabled(model: IFormInput<boolean>) {
+    this.customizationService.setReconnectionEnabled(model.value);
+  }
+
   showCacheDir() {
     electron.remote.shell.showItemInFolder(
       electron.remote.app.getPath('userData')

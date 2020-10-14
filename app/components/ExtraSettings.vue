@@ -56,6 +56,12 @@
       @input="setPollingPerformanceStatistics" />
     <p>{{ $t('settings.pollingPerformanceStatisticsDescription') }}</p>
   </div>
+  <div class="section">
+    <BoolInput
+      :value="reconnectionEnabledModel"
+      @input="setReconnectionEnabled"
+      class="optional-item" />
+  </div>
 </div>
 </template>
 

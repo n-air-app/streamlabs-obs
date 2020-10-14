@@ -26,6 +26,7 @@ export class CustomizationService
     showOptimizationDialogForNiconico: true,
     optimizeWithHardwareEncoder: true,
     pollingPerformanceStatistics: true,
+    reconnectionEnabled: true,
     experimental: {
       // put experimental features here
     }
@@ -84,6 +85,14 @@ export class CustomizationService
 
   setPollingPerformanceStatistics(activate: boolean) {
     this.setSettings({ pollingPerformanceStatistics: activate });
+  }
+
+  get reconnectionEnabled() {
+    return this.state.reconnectionEnabled;
+  }
+
+  setReconnectionEnabled(enable: boolean) {
+    this.setSettings({ reconnectionEnabled: enable});
   }
 
   getSettingsFormData(): TFormData {
