@@ -3,9 +3,17 @@ import { EStreamingState, ERecordingState } from './streaming-api';
 
 import { createSetupFunction } from 'util/test-setup';
 
+function noop() {}
+
 jest.mock('services/stateful-service');
 jest.mock('util/injector');
-jest.mock('services/obs-api', () => ({}));
+jest.mock('../../../obs-api', () => ({
+  NodeObs: {
+    OBS_service_startStreaming: noop,
+    OBS_service_stopStreaming: noop,
+    OBS_service_connectOutputSignals: noop,
+  }
+}));
 jest.mock('services/settings', () => ({}));
 jest.mock('services/windows', () => ({}));
 jest.mock('services/usage-statistics', () => ({}));
@@ -14,13 +22,11 @@ jest.mock('services/i18n', () => ({
 }));
 jest.mock('services/customization', () => ({}));
 jest.mock('services/user', () => ({}));
-
-function noop() {}
+jest.mock('util/menus/Menu', () => ({}));
+jest.mock('services/notifications', () => ({}));
+const showWindow = jest.fn();
 
 const createInjectee = ({
-  OBS_service_startStreaming = noop,
-  OBS_service_stopStreaming = noop,
-  OBS_service_connectOutputSignals = noop,
   recordEvent = noop,
   WarnBeforeStartingStream = false,
   WarnBeforeStoppingStream = false,
@@ -30,13 +36,6 @@ const createInjectee = ({
   updateStreamSettings = noop,
   optimizeForNiconico = false,
 } = {}) => ({
-  ObsApiService: {
-    nodeObs: {
-      OBS_service_startStreaming,
-      OBS_service_stopStreaming,
-      OBS_service_connectOutputSignals,
-    },
-  },
   SettingsService: {
     state: {
       General: {
@@ -58,6 +57,9 @@ const createInjectee = ({
   },
   CustomizationService: {
     optimizeForNiconico,
+  },
+  WindowsService: {
+    showWindow: showWindow,
   },
 });
 
@@ -85,11 +87,16 @@ test('toggleStreamingでstreamingStatusがofflineの場合', () => {
   const OBS_service_startStreaming = jest.fn();
   const OBS_service_stopStreaming = jest.fn();
 
-  setup({
-    injectee: createInjectee({
+  jest.mock('../../../obs-api', () => ({
+    NodeObs: {
       OBS_service_startStreaming,
       OBS_service_stopStreaming,
-    }),
+      OBS_service_connectOutputSignals: noop,
+    }
+  }));
+
+  setup({
+    injectee: createInjectee(),
     state: {
       StreamingService: {
         streamingStatus: EStreamingState.Offline,
@@ -114,10 +121,16 @@ test('toggleStreamingでstreamingStatusがoffline、配信開始時に確認し�
   const OBS_service_startStreaming = jest.fn();
   const OBS_service_stopStreaming = jest.fn();
 
-  setup({
-    injectee: createInjectee({
+  jest.mock('../../../obs-api', () => ({
+    NodeObs: {
       OBS_service_startStreaming,
       OBS_service_stopStreaming,
+      OBS_service_connectOutputSignals: noop,
+    }
+  }));
+
+  setup({
+    injectee: createInjectee({
       WarnBeforeStartingStream: true,
     }),
     state: {
@@ -145,10 +158,16 @@ test('toggleStreamingでstreamingStatusがoffline、配信開始時に確認し�
   const OBS_service_startStreaming = jest.fn();
   const OBS_service_stopStreaming = jest.fn();
 
-  setup({
-    injectee: createInjectee({
+  jest.mock('../../../obs-api', () => ({
+    NodeObs: {
       OBS_service_startStreaming,
       OBS_service_stopStreaming,
+      OBS_service_connectOutputSignals: noop,
+    }
+  }));
+
+  setup({
+    injectee: createInjectee({
       WarnBeforeStartingStream: true,
     }),
     state: {
@@ -178,11 +197,16 @@ test('toggleStreamingでstreamingStatusがoffline、配信開始と同時に録�
   const OBS_service_stopStreaming = jest.fn();
   const OBS_service_connectOutputSignals = jest.fn();
 
-  setup({
-    injectee: createInjectee({
+  jest.mock('../../../obs-api', () => ({
+    NodeObs: {
       OBS_service_startStreaming,
       OBS_service_stopStreaming,
       OBS_service_connectOutputSignals,
+    }
+  }));
+
+  setup({
+    injectee: createInjectee({
       RecordWhenStreaming: true,
     }),
     state: {
@@ -214,10 +238,16 @@ test('toggleStreamingでstreamingStatusがoffline、配信開始と同時に録�
     const OBS_service_startStreaming = jest.fn();
     const OBS_service_stopStreaming = jest.fn();
 
-    setup({
-      injectee: createInjectee({
+    jest.mock('../../../obs-api', () => ({
+      NodeObs: {
         OBS_service_startStreaming,
         OBS_service_stopStreaming,
+        OBS_service_connectOutputSignals: noop,
+      }
+    }));
+
+    setup({
+      injectee: createInjectee({
       }),
       state: {
         StreamingService: {
@@ -243,10 +273,16 @@ test('toggleStreamingでstreamingStatusがoffline、配信開始と同時に録�
     const OBS_service_startStreaming = jest.fn();
     const OBS_service_stopStreaming = jest.fn();
 
-    setup({
-      injectee: createInjectee({
+    jest.mock('../../../obs-api', () => ({
+      NodeObs: {
         OBS_service_startStreaming,
         OBS_service_stopStreaming,
+        OBS_service_connectOutputSignals: noop,
+      }
+    }));
+
+    setup({
+      injectee: createInjectee({
         WarnBeforeStoppingStream: true,
       }),
       state: {
@@ -274,10 +310,16 @@ test('toggleStreamingでstreamingStatusがoffline、配信開始と同時に録�
     const OBS_service_startStreaming = jest.fn();
     const OBS_service_stopStreaming = jest.fn();
 
-    setup({
-      injectee: createInjectee({
+    jest.mock('../../../obs-api', () => ({
+      NodeObs: {
         OBS_service_startStreaming,
         OBS_service_stopStreaming,
+        OBS_service_connectOutputSignals: noop,
+      }
+    }));
+
+    setup({
+      injectee: createInjectee({
         WarnBeforeStoppingStream: true,
       }),
       state: {
@@ -306,10 +348,16 @@ test('toggleStreamingでstreamingStatusがoffline、配信開始と同時に録�
     const OBS_service_startStreaming = jest.fn();
     const OBS_service_stopStreaming = jest.fn();
 
-    setup({
-      injectee: createInjectee({
+    jest.mock('../../../obs-api', () => ({
+      NodeObs: {
         OBS_service_startStreaming,
         OBS_service_stopStreaming,
+        OBS_service_connectOutputSignals: noop,
+      }
+    }));
+
+    setup({
+      injectee: createInjectee({
         KeepRecordingWhenStreamStops: false,
       }),
       state: {
@@ -337,10 +385,16 @@ test('toggleStreamingでstreamingStatusがendingの場合', () => {
   const OBS_service_startStreaming = jest.fn();
   const OBS_service_stopStreaming = jest.fn();
 
-  setup({
-    injectee: createInjectee({
+  jest.mock('../../../obs-api', () => ({
+    NodeObs: {
       OBS_service_startStreaming,
       OBS_service_stopStreaming,
+      OBS_service_connectOutputSignals: noop,
+    }
+  }));
+
+  setup({
+    injectee: createInjectee({
       KeepRecordingWhenStreamStops: false,
     }),
     state: {
@@ -376,6 +430,9 @@ test('toggleStreamingAsyncでstreamingStatusがoffline以外の場合', async ()
   const { StreamingService } = require('./streaming');
   const { instance } = StreamingService;
 
+  instance.client.fetchOnairUserProgram = jest.fn(() => Promise.resolve('lv12345'));
+  instance.client.fetchOnairChannels = jest.fn(() => Promise.resolve({ ok: true, value: [] }));
+
   instance.toggleStreaming = jest.fn();
 
   await instance.toggleStreamingAsync();
@@ -406,8 +463,8 @@ test('toggleStreamingAsyncでstreamingStatusがoffline、ニコニコにログ�
   setup({
     injectee: createInjectee({
       isNiconicoLoggedIn: true,
-      updateStreamSettings() {
-        return { asking: true };
+      updateStreamSettings: () => {
+        return { url: '', name: '' };
       },
     }),
     state: {
@@ -419,6 +476,16 @@ test('toggleStreamingAsyncでstreamingStatusがoffline、ニコニコにログ�
 
   const { StreamingService } = require('./streaming');
   const { instance } = StreamingService;
+  const channels = [{
+    id: 'id',
+    name: 'name',
+    ownerName: 'ownerName',
+    thumbnailUrl: 'thumbnailUrl',
+    smallThumbnailUrl: 'smallThumbnailUrl',
+  }];
+
+  instance.client.fetchOnairUserProgram = jest.fn(() => Promise.resolve({ programId: 'lv12345' }));
+  instance.client.fetchOnairChannels = jest.fn(() => Promise.resolve({ ok: true, value: channels }));
 
   instance.toggleStreaming = jest.fn();
 
@@ -431,7 +498,7 @@ test('toggleStreamingAsyncでstreamingStatusがoffline、ニコニコにログ�
   setup({
     injectee: createInjectee({
       isNiconicoLoggedIn: true,
-      updateStreamSettings() {
+      updateStreamSettings: () => {
         return { key: '' };
       },
     }),
@@ -444,6 +511,9 @@ test('toggleStreamingAsyncでstreamingStatusがoffline、ニコニコにログ�
 
   const { StreamingService } = require('./streaming');
   const { instance } = StreamingService;
+
+  instance.client.fetchOnairUserProgram = jest.fn(() => Promise.resolve(undefined));
+  instance.client.fetchOnairChannels = jest.fn(() => Promise.resolve({ ok: true, value: [] }));
 
   instance.toggleStreaming = jest.fn();
   instance.optimizeForNiconicoAndStartStreaming = jest.fn();
@@ -464,7 +534,7 @@ test('toggleStreamingAsyncでstreamingStatusがoffline、ニコニコにログ�
   setup({
     injectee: createInjectee({
       isNiconicoLoggedIn: true,
-      updateStreamSettings() {
+      updateStreamSettings: () => {
         return { key: 'hoge' };
       },
       optimizeForNiconico: true,
@@ -481,6 +551,9 @@ test('toggleStreamingAsyncでstreamingStatusがoffline、ニコニコにログ�
   instance.optimizeForNiconicoAndStartStreaming = jest.fn();
   instance.toggleStreaming = jest.fn();
 
+  instance.client.fetchOnairUserProgram = jest.fn(() => Promise.resolve({ programId: 'lv12345' }));
+  instance.client.fetchOnairChannels = jest.fn(() => Promise.resolve({ ok: true, value: [] }));
+
   await instance.toggleStreamingAsync();
 
   expect(instance.optimizeForNiconicoAndStartStreaming).toHaveBeenCalledTimes(1);
@@ -491,7 +564,7 @@ test('toggleStreamingAsyncでstreamingStatusがoffline、ニコニコにログ�
   setup({
     injectee: createInjectee({
       isNiconicoLoggedIn: true,
-      updateStreamSettings() {
+      updateStreamSettings: () => {
         return { key: 'hoge' };
       },
     }),
@@ -507,6 +580,9 @@ test('toggleStreamingAsyncでstreamingStatusがoffline、ニコニコにログ�
   instance.toggleStreaming = jest.fn();
   instance.optimizeForNiconicoAndStartStreaming = jest.fn();
 
+  instance.client.fetchOnairUserProgram = jest.fn(() => Promise.resolve({ programId: 'lv12345' }));
+  instance.client.fetchOnairChannels = jest.fn(() => Promise.resolve({ ok: true, value: [] }));
+
   await instance.toggleStreamingAsync();
 
   expect(instance.optimizeForNiconicoAndStartStreaming).not.toHaveBeenCalled();
@@ -517,7 +593,7 @@ test('toggleStreamingAsyncでstreamingStatusがoffline、ニコニコにログ�
   setup({
     injectee: createInjectee({
       isNiconicoLoggedIn: true,
-      updateStreamSettings() {
+      updateStreamSettings: () => {
         throw new Error('NetworkError');
       },
     }),
@@ -539,6 +615,9 @@ test('toggleStreamingAsyncでstreamingStatusがoffline、ニコニコにログ�
   instance.toggleStreaming = jest.fn();
   instance.optimizeForNiconicoAndStartStreaming = jest.fn();
 
+  instance.client.fetchOnairUserProgram = jest.fn(() => Promise.resolve({ programId: 'lv12345' }));
+  instance.client.fetchOnairChannels = jest.fn(() => Promise.resolve({ ok: true, value: [] }));
+
   await instance.toggleStreamingAsync();
 
   expect(instance.optimizeForNiconicoAndStartStreaming).not.toHaveBeenCalled();
@@ -549,7 +628,7 @@ test('toggleStreamingAsyncでstreamingStatusがoffline、ニコニコにログ�
   setup({
     injectee: createInjectee({
       isNiconicoLoggedIn: true,
-      updateStreamSettings() {
+      updateStreamSettings: () => {
         throw new Response('HTTPError', {
           statusText: 'Internal Server Error(stub)',
           status: 500,
@@ -573,6 +652,9 @@ test('toggleStreamingAsyncでstreamingStatusがoffline、ニコニコにログ�
   const { instance } = StreamingService;
   instance.toggleStreaming = jest.fn();
   instance.optimizeForNiconicoAndStartStreaming = jest.fn();
+
+  instance.client.fetchOnairUserProgram = jest.fn(() => Promise.resolve({ programId: 'lv12345' }));
+  instance.client.fetchOnairChannels = jest.fn(() => Promise.resolve({ ok: true, value: [] }));
 
   await instance.toggleStreamingAsync();
 

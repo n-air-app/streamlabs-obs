@@ -109,10 +109,13 @@
         "name": "映像ビットレート（kbps）"
       },
       "StreamEncoder": {
-        "name": "エンコーダー",
-        "obs_x264": "ソフトウェア（x264）",
-        "obs_qsv11": "ハードウェア（QSV）",
-        "ffmpeg_nvenc": "ハードウェア (NVENC)"
+        "name": "@:settings.Output.Streaming.Encoder.name",
+        "obs_x264": "@:settings.Output.Streaming.Encoder.obs_x264",
+        "obs_qsv11": "@:settings.Output.Streaming.Encoder.obs_qsv11",
+        "ffmpeg_nvenc": "@:settings.Output.Streaming.Encoder.ffmpeg_nvenc",
+        "x264": "@:settings.Output.Streaming.Encoder.obs_x264",
+        "qsv": "@:settings.Output.Streaming.Encoder.obs_qsv11",
+        "nvenc": "@:settings.Output.Streaming.Encoder.ffmpeg_nvenc"
       },
       "ABitrate": {
         "name": "音声ビットレート（kbps）"
@@ -160,10 +163,10 @@
         "name": "音声トラック"
       },
       "Encoder": {
-        "name": "@:settings.Output.Streaming.StreamEncoder.name",
-        "obs_x264": "@:settings.Output.Streaming.StreamEncoder.obs_x264",
-        "obs_qsv11": "@:settings.Output.Streaming.StreamEncoder.obs_qsv11",
-        "ffmpeg_nvenc": "@:settings.Output.Streaming.StreamEncoder.ffmpeg_nvenc"
+        "name": "エンコーダ",
+        "obs_x264": "ソフトウェア（x264）",
+        "obs_qsv11": "ハードウェア（QSV）",
+        "ffmpeg_nvenc": "ハードウェア (NVENC)"
       },
       "ApplyServiceSettings": {
         "name": "@:settings.Output.Streaming.EnforceBitrate.name"
@@ -279,7 +282,8 @@
       "RecEncoder": {
         "name": "@:settings.Output.Streaming.Encoder.name",
         "obs_x264": "@:settings.Output.Streaming.Encoder.obs_x264",
-        "obs_qsv11": "@:settings.Output.Streaming.Encoder.obs_qsv11"
+        "obs_qsv11": "@:settings.Output.Streaming.Encoder.obs_qsv11",
+        "ffmpeg_nvenc": "@:settings.Output.Streaming.Encoder.ffmpeg_nvenc"
       },
       "RecRescale": {
         "name": "@:settings.Output.Streaming.Rescale.name"
@@ -555,7 +559,7 @@
   "cacheIdCopy": "コピーする",
   "cacheManagement": "キャッシュ管理",
   "noticeWhileStreaming": "現在配信中のため、一部の設定は変更できません。",
-  "noticeForStreaming": "niconicoにログインしている場合、{br}これらの項目はニコニコ生放送用に自動で設定されます。",
+  "noticeForStreaming": "ニコニコにログインしている場合、{br}これらの項目はニコニコ生放送用に自動で設定されます。",
   "showCacheDirectory": "キャッシュディレクトリーを表示",
   "deleteCacheAndRestart": "キャッシュを削除して再起動",
   "confirmStreamTitleAndGameBeforeGoingLive": "ライブになる前にストリームのタイトルとゲームを確認して下さい。",
