@@ -203,7 +203,6 @@ export class SettingsService extends StatefulService<ISettingsState>
       'SysTrayWhenStarted',
       'RecRBSuffix',
       'LowLatencyEnable',
-      'BindIP',
       'FilenameFormatting',
       'MaxRetries',
       'NewSocketLoopEnable',
